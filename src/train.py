@@ -1,10 +1,15 @@
 """Train models with MLflow tracking + Model Registry."""
 import os
 import sys
+
+# CRITICAL: Add project root to sys.path FIRST (before any src imports)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 import joblib
 import mlflow
 import mlflow.sklearn
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -19,8 +24,8 @@ from sklearn.pipeline import Pipeline
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from data_preprocessing import build_preprocessor, load_and_split
+# Use PROPER package import path so pickle stores correct module reference
+from src.data_preprocessing import build_preprocessor, load_and_split
 
 mlflow.set_experiment("Heart_Disease_Prediction_Pronab")
 REGISTERED_MODEL_NAME = "HeartDiseasePredictor_Pronab"
@@ -105,7 +110,7 @@ def train_and_log(model, param_grid, model_name, X_train, X_test, y_train, y_tes
         y_proba = best_model.predict_proba(X_test)[:, 1]
 
         cv_scores = cross_val_score(best_model, X_train, y_train,
-                                     cv=cv_strategy, scoring="roc_auc")
+                                    cv=cv_strategy, scoring="roc_auc")
 
         metrics = {
             "accuracy": accuracy_score(y_test, y_pred),
@@ -150,9 +155,9 @@ def train_and_log(model, param_grid, model_name, X_train, X_test, y_train, y_tes
             registered_model_name=f"{REGISTERED_MODEL_NAME}_{model_name}"
         )
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"MODEL: {model_name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Best params: {grid.best_params_}")
         print(f"CV ROC-AUC: {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
         for k, v in metrics.items():
@@ -207,7 +212,7 @@ def main():
             }
         ),
         "XGBoost": (
-            XGBClassifier(eval_metric="logloss", random_state=42, use_label_encoder=False),
+            XGBClassifier(eval_metric="logloss", random_state=42),
             {
                 "classifier__n_estimators": [100, 200],
                 "classifier__max_depth": [3, 6],

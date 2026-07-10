@@ -3,6 +3,7 @@ import logging
 import time
 import joblib
 import pandas as pd
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
@@ -22,13 +23,30 @@ PREDICTION_COUNT = Counter("predictions_total", "Prediction count by class", ["p
 PREDICTION_CONFIDENCE = Histogram("prediction_confidence", "Model confidence distribution")
 MODEL_FEATURE_MEAN = Gauge("input_feature_mean", "Mean of input features", ["feature"])
 
+# Global model reference
+MODEL = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Load model on startup, cleanup on shutdown."""
+    global MODEL
+    try:
+        MODEL = joblib.load("models/best_model.pkl")
+        logger.info("Model loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load model: {e}")
+        MODEL = None
+    yield
+    logger.info("Shutting down...")
+
+
 app = FastAPI(
     title="Heart Disease Prediction API",
     description="MLOps Assignment 01 - Pronab Sardar",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
-
-MODEL = None
 
 
 class HeartInput(BaseModel):
@@ -53,13 +71,6 @@ class PredictionOutput(BaseModel):
     risk_label: str
 
 
-@app.on_event("startup")
-def load_model():
-    global MODEL
-    MODEL = joblib.load("models/best_model.pkl")
-    logger.info("Model loaded successfully")
-
-
 @app.get("/")
 def root():
     return {
@@ -78,8 +89,13 @@ def health():
 @app.post("/predict", response_model=PredictionOutput)
 def predict(payload: HeartInput):
     start = time.time()
+    if MODEL is None:
+        REQUEST_COUNT.labels(endpoint="/predict", status="error").inc()
+        logger.error("Model not loaded")
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
     try:
-        df = pd.DataFrame([payload.dict()])
+        df = pd.DataFrame([payload.model_dump()])
         pred = int(MODEL.predict(df)[0])
         proba = float(MODEL.predict_proba(df)[0].max())
         label = "High Risk" if pred == 1 else "Low Risk"
@@ -91,7 +107,7 @@ def predict(payload: HeartInput):
         PREDICTION_CONFIDENCE.observe(proba)
 
         # Feature drift monitoring
-        for feature, value in payload.dict().items():
+        for feature, value in payload.model_dump().items():
             MODEL_FEATURE_MEAN.labels(feature=feature).set(value)
 
         logger.info(f"Prediction: {pred} | Confidence: {proba:.3f} | Label: {label}")
