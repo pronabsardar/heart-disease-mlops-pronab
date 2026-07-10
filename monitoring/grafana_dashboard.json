@@ -1,0 +1,113 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "title": "Heart Disease API - Production Monitoring (Pronab Sardar)",
+  "tags": ["mlops", "heart-disease", "fastapi", "pronab"],
+  "timezone": "browser",
+  "schemaVersion": 27,
+  "version": 1,
+  "refresh": "10s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total API Requests",
+      "type": "stat",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(api_requests_total)", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "short"}}
+    },
+    {
+      "id": 2,
+      "title": "Success Rate",
+      "type": "stat",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(api_requests_total{status=\"success\"}) / sum(api_requests_total) * 100", "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": 0}, {"color": "yellow", "value": 90}, {"color": "green", "value": 99}]}
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Avg Latency (ms)",
+      "type": "stat",
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "rate(api_request_latency_seconds_sum[5m]) / rate(api_request_latency_seconds_count[5m]) * 1000", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "ms"}}
+    },
+    {
+      "id": 4,
+      "title": "Error Count",
+      "type": "stat",
+      "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+      "targets": [{"expr": "sum(api_requests_total{status=\"error\"})", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "fixed", "fixedColor": "red"}}}
+    },
+    {
+      "id": 5,
+      "title": "Request Rate",
+      "type": "timeseries",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "targets": [{"expr": "sum(rate(api_requests_total[1m])) by (endpoint)", "refId": "A", "legendFormat": "{{endpoint}}"}]
+    },
+    {
+      "id": 6,
+      "title": "Latency Percentiles",
+      "type": "timeseries",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum(rate(api_request_latency_seconds_bucket[5m])) by (le))", "refId": "A", "legendFormat": "p50"},
+        {"expr": "histogram_quantile(0.95, sum(rate(api_request_latency_seconds_bucket[5m])) by (le))", "refId": "B", "legendFormat": "p95"},
+        {"expr": "histogram_quantile(0.99, sum(rate(api_request_latency_seconds_bucket[5m])) by (le))", "refId": "C", "legendFormat": "p99"}
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Predictions by Class",
+      "type": "piechart",
+      "gridPos": {"x": 0, "y": 12, "w": 8, "h": 8},
+      "targets": [{"expr": "sum by (prediction) (predictions_total)", "refId": "A", "legendFormat": "Class {{prediction}}"}]
+    },
+    {
+      "id": 8,
+      "title": "Confidence Distribution",
+      "type": "histogram",
+      "gridPos": {"x": 8, "y": 12, "w": 8, "h": 8},
+      "targets": [{"expr": "sum(rate(prediction_confidence_bucket[5m])) by (le)", "refId": "A"}]
+    },
+    {
+      "id": 9,
+      "title": "Success vs Error Trend",
+      "type": "timeseries",
+      "gridPos": {"x": 16, "y": 12, "w": 8, "h": 8},
+      "targets": [
+        {"expr": "sum(rate(api_requests_total{status=\"success\"}[5m]))", "refId": "A", "legendFormat": "Success"},
+        {"expr": "sum(rate(api_requests_total{status=\"error\"}[5m]))", "refId": "B", "legendFormat": "Error"}
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Input Feature Drift",
+      "type": "timeseries",
+      "gridPos": {"x": 0, "y": 20, "w": 24, "h": 8},
+      "targets": [{"expr": "input_feature_mean{feature=~\"age|chol|thalach|trestbps|oldpeak\"}", "refId": "A", "legendFormat": "{{feature}}"}]
+    }
+  ]
+}

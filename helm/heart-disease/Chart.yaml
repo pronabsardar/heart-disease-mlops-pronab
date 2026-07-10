@@ -1,0 +1,14 @@
+apiVersion: v2
+name: heart-disease
+description: Helm chart for Heart Disease Prediction API - MLOps Assignment 01
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Pronab Sardar
+    email: pronab.sardar@spglobal.com
+keywords:
+  - mlops
+  - machine-learning
+  - fastapi
+  - heart-disease

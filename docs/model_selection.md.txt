@@ -1,0 +1,73 @@
+# Model Selection & Tuning Documentation
+
+**Author:** Pronab Sardar  
+**Assignment:** MLOps AIMLCZG523 - Assignment 01
+
+## Objective
+Document the systematic model selection and hyperparameter tuning process for the Heart Disease Prediction task.
+
+## Candidate Models
+
+### Why These Three Models?
+
+| Model | Rationale |
+|-------|-----------|
+| **Logistic Regression** | Baseline linear model; highly interpretable; fast; regulated to prevent overfitting |
+| **Random Forest** | Non-linear ensemble; handles feature interactions naturally; robust to outliers |
+| **XGBoost** | State-of-the-art gradient boosting; often wins tabular classification tasks; handles missing data internally |
+
+## Hyperparameter Search Space
+
+### Logistic Regression
+- `C`: [0.01, 0.1, 1, 10] — Regularization strength
+- `penalty`: L2 (Ridge) — Prevents overfitting
+- `solver`: lbfgs — Efficient for small-to-medium datasets
+
+### Random Forest
+- `n_estimators`: [100, 200] — Number of trees
+- `max_depth`: [5, 10, None] — Tree depth
+- `min_samples_split`: [2, 5] — Regularization
+
+### XGBoost
+- `n_estimators`: [100, 200] — Boosting rounds
+- `max_depth`: [3, 6] — Tree complexity
+- `learning_rate`: [0.05, 0.1] — Shrinkage
+
+## Tuning Strategy
+- **Method:** GridSearchCV (exhaustive search)
+- **Cross-validation:** Stratified K-Fold (5 splits)
+- **Scoring:** ROC-AUC (robust to class imbalance)
+- **Parallelization:** n_jobs=-1 (all CPU cores)
+
+## Evaluation Metrics
+All 5 metrics logged for comprehensive assessment:
+- **Accuracy:** Overall correctness
+- **Precision:** True positive rate among predicted positives (critical for medical - low false positives)
+- **Recall/Sensitivity:** True positive rate (critical for medical - catch all diseases)
+- **F1-Score:** Harmonic mean of precision & recall
+- **ROC-AUC:** Threshold-independent performance
+
+## Model Selection Criterion
+**Primary:** ROC-AUC (threshold-independent, robust)  
+**Secondary:** Cross-validation stability (low std across folds)
+
+## Final Selection
+Based on experimentation:
+- **Winner:** XGBoost
+- **ROC-AUC:** ~0.92
+- **CV Stability:** ±0.02 (low variance)
+
+**Justification:** XGBoost consistently outperformed other models on ROC-AUC while maintaining low cross-validation variance, indicating robust generalization.
+
+## Production Deployment Decision
+XGBoost was:
+1. Registered in MLflow Model Registry as `HeartDiseasePredictor_Pronab_XGBoost`
+2. Promoted to `Production` stage
+3. Serialized as `models/best_model.pkl` for API deployment
+4. Containerized in Docker for scalable inference
+
+## Reproducibility Notes
+- Random state: 42 (all models)
+- Test size: 20% (stratified)
+- Preprocessing pipeline serialized with model
+- All hyperparameters logged in MLflow

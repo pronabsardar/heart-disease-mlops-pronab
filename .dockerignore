@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+.git
+.github
+notebooks/
+tests/
+mlruns/
+data/
+screenshots/
+report/
+*.md
+.pytest_cache
+venv/
+helm/
