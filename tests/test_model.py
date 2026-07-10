@@ -1,8 +1,15 @@
 """Tests for trained model."""
+import sys
 import os
 import joblib
 import pandas as pd
 import pytest
+
+# Ensure src is importable BEFORE loading the pickle
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Import to register the FeatureEngineer class (needed for pickle deserialization)
+from src.data_preprocessing import FeatureEngineer  # noqa: F401
 
 
 @pytest.mark.skipif(not os.path.exists("models/best_model.pkl"),

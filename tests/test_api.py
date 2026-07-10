@@ -9,10 +9,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 @pytest.fixture
 def client():
+    """Create test client with lifespan events triggered."""
     if not os.path.exists("models/best_model.pkl"):
         pytest.skip("Model not trained yet")
     from src.api import app
-    return TestClient(app)
+    # Use context manager to trigger lifespan (startup/shutdown)
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def test_root(client):
@@ -26,6 +29,7 @@ def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    assert response.json()["model_loaded"] is True
 
 
 def test_predict(client):
@@ -45,7 +49,7 @@ def test_predict(client):
 def test_predict_invalid_input(client):
     payload = {"age": 55}  # Missing fields
     response = client.post("/predict", json=payload)
-    assert response.status_code == 422  # Validation error
+    assert response.status_code == 422
 
 
 def test_metrics_endpoint(client):
