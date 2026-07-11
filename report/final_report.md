@@ -2,10 +2,7 @@
 ## Heart Disease Prediction: End-to-End MLOps Pipeline
 
 **Student Name:** Pronab Sardar  
-**Course:** AIMLCZG523 - MLOps  
-**Institution:** BITS Pilani  
-**Date:** July 2026  
-**Repository:** https://github.com/[username]/heart-disease-mlops-pronab
+**Repository:** https://github.com/pronabsardar/heart-disease-mlops-pronab
 
 ---
 
