@@ -1,8 +1,6 @@
-# 🫀 Heart Disease Prediction - MLOps Pipeline
+#  Heart Disease Prediction - MLOps Pipeline
 
 **Author:** Pronab Sardar  
-**Course:** AIMLCZG523 - MLOps Assignment 01  
-**Institution:** BITS Pilani
 
 ## Overview
 End-to-end MLOps solution predicting heart disease risk using the UCI Heart Disease dataset, deployed as a production-ready API with CI/CD, containerization, Kubernetes orchestration, and monitoring.
